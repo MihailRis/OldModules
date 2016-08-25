@@ -16,7 +16,7 @@ ogs = int(gs*bsInv) #GenerationSise in blocks
 #Biom configs
 PlainsB = (235*bs, 230*bs, 3, 50, 100) # world_down, world_up, up_blocks, Trees, chance
 DesertB = (225*bs, 220*bs, 5, 0, 60)
-MountainsB = (210*bs, 200*bs, 1, 90, 70)
+MountainsB = (210*bs, 200*bs, 18, 90, 70)
 ForestB = (250*bs, 230*bs, 3, 4, 100)
 SeaB = (268*bs, 264*bs, 5, 0, 50)
 
@@ -92,15 +92,15 @@ def generation(seed, mode, x, y, flatdata=10):
 			right_percent = float(right_point-x)*lh_DIVggs
 
 			# Влияние высоты точек на высоту блока
-			lpecented = left_point_H*right_percent
+			lpercented = left_point_H*right_percent
 			rpercented = right_point_H*left_percent
 
 			#Определение высоты блока
-			point_hight = lpecented+rpercented
+			point_hight = lpercented+rpercented
 
 			#Определение биома для блока
 			random.seed(seed+x+y+point_hight)
-			if random.randint(-(int(lpecented*100)), int(rpercented*100)) >= 0:
+			if random.randint(-(int(rpercented*100)), int(lpercented*100)) >= 0:
 				biom = left_biom
 			else:
 				biom = right_biom
