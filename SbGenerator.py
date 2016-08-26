@@ -18,7 +18,7 @@ gs = 20 #GenerationSise
 
 #Biom configs
 PlainsB = (235, 230, 3, 50, 100, 0) # world_down, world_up, up_blocks, Trees, chance, biom_id
-DesertB = (225, 220, 5, 0, 60, 1)
+DesertB = (250, 240, 5, 0, 660, 1)
 MountainsB = (220, 200, 19, 90, 70, 2)
 ForestB = (250, 230, 3, 4, 100, 3)
 SeaB = (268, 264, 5, 0, 50, 4)
@@ -68,12 +68,12 @@ def generation(seed, mode, x, y, flatdata=10):
 		# определение левой и правой точек и их биомов
 		left_point = int(x/gs)*gs
 		random.seed(seed)
-		random.seed(int((left_point*100.0)/gs/random.randint(20, 100)))
+		random.seed(int((left_point*100.0)/gs/random.randint(100, 400)))
 		left_biom = BIOMS[random.randint(0, len(BIOMS)-1)]
 
 		right_point = (int(x/gs)*gs)+gs
 		random.seed(seed)
-		random.seed(int((right_point*100.0)/gs/random.randint(20, 100)))
+		random.seed(int((right_point*100.0)/gs/random.randint(100, 400)))
 		right_biom = BIOMS[random.randint(0, len(BIOMS)-1)]
 
 		# Если координаты нулевые то по-умолчанию ставится биом Plains - равнина
@@ -87,6 +87,7 @@ def generation(seed, mode, x, y, flatdata=10):
 		#определение высот 2-х основных точек, левой и правой
 		random.seed(seed*left_point*gs)
 		left_point_H = int(random.randint(left_biom[1], left_biom[0]))
+
 		random.seed(seed*right_point*gs)
 		right_point_H = int(random.randint(right_biom[1], right_biom[0]))
 		biom = PlainsB
@@ -117,11 +118,14 @@ def generation(seed, mode, x, y, flatdata=10):
 			point_hight = (left_point_H*right_percent)+(right_point_H*left_percent)
 
 			#Определение биома для блока
-			random.seed(seed+x+y+point_hight)
-			if random.randint(-(int(left_point_H*left_percent*100)), int(right_point_H*right_percent*100)) >= 0:
-				biom = left_biom
+			if left_biom[-1] != right_biom[-1]:
+				random.seed(seed+x+y+point_hight)
+				if random.randint(-(int(left_point_H*left_percent*100)), int(right_point_H*right_percent*100)) >= 0:
+					biom = left_biom
+				else:
+					biom = right_biom
 			else:
-				biom = right_biom
+				biom = left_biom
 
 		# Выбор id блока
 		if y > int(point_hight):
@@ -149,7 +153,7 @@ def generation(seed, mode, x, y, flatdata=10):
 			if int(y) >= 251:
 				return 11
 
-		# Генерация деревьев
-		region = int(x/10)+int(y/10)
+		# Генерация деревьев (ВСЁ ЗАНОВО!)
+#		region = int(x/10)+int(y/10)
 
 		return 0
