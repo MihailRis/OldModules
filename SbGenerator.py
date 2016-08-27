@@ -17,20 +17,22 @@ gs = 20 #GenerationSise
 #ogs = int(gs*bsInv) #GenerationSise in blocks
 
 #Biom configs
-PlainsB = (235, 230, 3, 50, 100, 0) # world_down, world_up, up_blocks, Trees, chance, biom_id
-DesertB = (250, 240, 5, 0, 660, 1)
-MountainsB = (220, 200, 19, 90, 70, 2)
-ForestB = (250, 230, 3, 4, 100, 3)
+PlainsB = (235, 230, 3, 10, 100, 0) # world_down, world_up, up_blocks, Trees, chance, biom_id
+DesertB = (250, 240, 5, 1000, 60, 1)
+MountainsB = (220, 200, 19, 20, 70, 2)
+ForestB = (250, 230, 3, 1, 100, 3)
 SeaB = (268, 264, 5, 0, 50, 4)
 
-BIOMS0 = [PlainsB, DesertB, MountainsB, ForestB, SeaB]
+BIOMS0 = [PlainsB, DesertB, MountainsB, ForestB]
 BIOMS = []
 
 # Деревья
-TreeS = (PATH+"/resourses/structures/tree.txt", 55) # путь к файлу со структурой, шанс генерации (колличество повторов в списке структур)
+TreeS = (PATH+"/resourses/structures/tree.txt", 25) # путь к файлу со структурой, шанс генерации (колличество повторов в списке структур)
+Tree2S = (PATH+"/resourses/structures/tree2.txt", 25)
+WheatS = (PATH+"/resourses/structures/wheat.txt", 10)
 
 
-TREES0 = [TreeS]
+TREES0 = [TreeS, WheatS, Tree2S]
 TREES = []
 
 # Генерация списка с биомами с колличеством их копий которое указано в chance в кортеже биома
@@ -62,70 +64,75 @@ def generation(seed, mode, x, y, flatdata=10):
 
 	# основной режим генерации
 	if mode == "optim#normal":
-		point_hight = None
+		def get_hight(x, y):
+			point_hight = None
 		
 
-		# определение левой и правой точек и их биомов
-		left_point = int(x/gs)*gs
-		random.seed(seed)
-		random.seed(int((left_point*100.0)/gs/random.randint(100, 400)))
-		left_biom = BIOMS[random.randint(0, len(BIOMS)-1)]
+			# определение левой и правой точек и их биомов
+			left_point = int(x/gs)*gs
+			random.seed(seed)
+			random.seed(int((left_point*100.0)/gs/random.randint(10*gs, 30*gs)))
+			left_biom = BIOMS[random.randint(0, len(BIOMS)-1)]
 
-		right_point = (int(x/gs)*gs)+gs
-		random.seed(seed)
-		random.seed(int((right_point*100.0)/gs/random.randint(100, 400)))
-		right_biom = BIOMS[random.randint(0, len(BIOMS)-1)]
+			right_point = (int(x/gs)*gs)+gs
+			random.seed(seed)
+			random.seed(int((right_point*100.0)/gs/random.randint(10*gs, 30*gs)))
+			right_biom = BIOMS[random.randint(0, len(BIOMS)-1)]
 
-		# Если координаты нулевые то по-умолчанию ставится биом Plains - равнина
-		# (биом под персонажем в начале)
-		if int(left_point*bsInv) == 0:
-			left_biom = PlainsB
+			# Если координаты нулевые то по-умолчанию ставится биом Plains - равнина
+			# (биом под персонажем в начале)
+			if int(left_point*bsInv) == 0:
+				left_biom = ForestB
 
-		if int(right_point*bsInv) == 0:
-			right_biom = PlainsB
+			if int(right_point*bsInv) == 0:
+				right_biom = ForestB
 
-		#определение высот 2-х основных точек, левой и правой
-		random.seed(seed*left_point*gs)
-		left_point_H = int(random.randint(left_biom[1], left_biom[0]))
+			#определение высот 2-х основных точек, левой и правой
+			random.seed(seed*left_point*gs)
+			left_point_H = int(random.randint(left_biom[1], left_biom[0]))
 
-		random.seed(seed*right_point*gs)
-		right_point_H = int(random.randint(right_biom[1], right_biom[0]))
-		biom = PlainsB
+			random.seed(seed*right_point*gs)
+			right_point_H = int(random.randint(right_biom[1], right_biom[0]))
+			biom = PlainsB
 
-		#если блок совподает с левой точкой
-		if int(left_point) == int(x):
-			point_hight = left_point_H
-			biom = left_biom
-
-		#если блок совподает с правой точкой
-		if int(right_point) == int(x):
-			point_hight = right_point_H
-			biom = right_biom
-
-
-		if point_hight is None: #Если высота блока ещё не определена:
-			rsn = 0
-
-			#Определения влияния точек на блок
-			left_percent = float(float(x-left_point)/gs)
-			right_percent = float(float(right_point-x)/gs)
-
-			# Влияние высоты точек на высоту блока
-			lpercented = left_point_H*right_percent
-			rpercented = right_point_H*left_percent
-
-			#Определение высоты блока
-			point_hight = (left_point_H*right_percent)+(right_point_H*left_percent)
-
-			#Определение биома для блока
-			if left_biom[-1] != right_biom[-1]:
-				random.seed(seed+x+y+point_hight)
-				if random.randint(-(int(left_point_H*left_percent*100)), int(right_point_H*right_percent*100)) >= 0:
-					biom = left_biom
-				else:
-					biom = right_biom
-			else:
+			#если блок совподает с левой точкой
+			if int(left_point) == int(x):
+				point_hight = left_point_H
 				biom = left_biom
+
+			#если блок совподает с правой точкой
+			if int(right_point) == int(x):
+				point_hight = right_point_H
+				biom = right_biom
+
+
+			if point_hight is None: #Если высота блока ещё не определена:
+				rsn = 0
+
+				#Определения влияния точек на блок
+				left_percent = float(float(x-left_point)/gs)
+				right_percent = float(float(right_point-x)/gs)
+
+				# Влияние высоты точек на высоту блока
+				lpercented = left_point_H*right_percent
+				rpercented = right_point_H*left_percent
+
+				#Определение высоты блока
+				point_hight = (left_point_H*right_percent)+(right_point_H*left_percent)
+
+				#Определение биома для блока
+				if left_biom[-1] != right_biom[-1]:
+					random.seed(seed+x+y+point_hight)
+					if random.randint(-(int(left_point_H*left_percent*100)), int(right_point_H*right_percent*100)) >= 0:
+						biom = left_biom
+					else:
+						biom = right_biom
+				else:
+					biom = left_biom
+
+			return point_hight, biom
+
+		point_hight, biom = get_hight(x, y)
 
 		# Выбор id блока
 		if y > int(point_hight):
@@ -154,6 +161,27 @@ def generation(seed, mode, x, y, flatdata=10):
 				return 11
 
 		# Генерация деревьев (ВСЁ ЗАНОВО!)
-#		region = int(x/10)+int(y/10)
+		region = int(x/10)*10
+		reg_hight, reg_biom = get_hight(region+5, 0)
+		reg_hight += 1
+		if reg_biom[3] != 1000 and y >= int(reg_hight)-10:
+			# Есть ли в данном квадрате дерево
+			random.seed(reg_hight)
+			randed = random.randint(0, reg_biom[3])
 
-		return 0
+			if randed == 0:
+				TREE = TREES[random.randint(0, len(TREES)-1)]
+				tree_file = open(TREE[0], 'r')
+				tree_data = tree_file.readlines()
+				# Получение блока из структуры дерева.
+				xpos = int(x-region)
+				ypos = int(reg_hight-y)
+				if xpos >= 0 and ypos >= 0:
+					try:
+						data = tree_data[10-int(ypos)]
+						data = data.split(".")
+						return int(data[int(xpos)])
+					except IndexError:
+						pass
+
+	return 0
