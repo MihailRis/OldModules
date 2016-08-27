@@ -68,13 +68,13 @@ def generation(seed, mode, x, y, flatdata=10):
             random.seed(seed)
             random.seed(int(
                 (left_point * 100.0) / generation_size / random.randint(10 * generation_size, 30 * generation_size)))
-            left_biom = BIOMS[random.randint(0, len(BIOMS) - 1)]
+            left_biom = random.choice(BIOMS)
 
             right_point = (int(x / generation_size) * generation_size) + generation_size
             random.seed(seed)
             random.seed(int(
                 (right_point * 100.0) / generation_size / random.randint(10 * generation_size, 30 * generation_size)))
-            right_biom = BIOMS[random.randint(0, len(BIOMS) - 1)]
+            right_biom = random.choice(BIOMS)
             # Если координаты нулевые то по-умолчанию ставится биом Plains - равнина
             # (биом под персонажем в начале)
             if left_point * block_size_inverted == 0:
