@@ -8,179 +8,191 @@
 import random
 import os
 
-PATH = os.path.dirname(os.path.abspath(__file__))+"\\"  # Путь к папке, в которой мы находимся
+# Путь к папке, в которой мы находимся
+PATH = os.path.dirname(os.path.abspath(__file__))
 
-block_size = 45  # размер блока
-block_size_inverted = 1.0 / float(block_size)
+# Путь к папке со структурами
+STRUCTURES_PATH = os.path.join(PATH, "resources", "structures")
 
-generation_size = 20  # GenerationSize
-# ogs = int(generation_size*block_size_inverted) #GenerationSize in blocks
+BLOCK_SKY = 0
+BLOCK_STONE = 1
+BLOCK_SOIL = 2
+BLOCK_GRASS = 3
+BLOCK_COAL = 4
+BLOCK_SAND = 5
+BLOCK_DIAMOND = 6
+BLOCK_WOOD = 7
+BLOCK_FOLIAGE = 8
+BLOCK_IRON = 9
+BLOCK_WATER = 11
+BLOCK_WHEAT = 17
+BLOCK_ROCK = 19
 
-# Biom configs
-PlainsB = (235, 230, 3, 10, 100, 0)  # world_down, world_up, up_blocks, Trees, chance, biom_id
-DesertB = (250, 240, 5, 1000, 60, 1)
-MountainsB = (220, 200, 19, 20, 70, 2)
-ForestB = (250, 230, 3, 1, 100, 3)
-SeaB = (268, 264, 5, 0, 50, 4)
+BLOCK_SIZE = 45
+GENERATION_SIZE = 20
+TREE_WIDTH = 10
+TREE_HEIGHT = 10
+SEA_LEVEL = 251
+TOP_LAYER_DEPTH = 6
+IRON_DEPTH = 20
+DIAMOND_DEPTH = 100
+COAL_CHANCE = 1.0 / 80
+IRON_CHANCE = 1.0 / 500
+DIAMOND_CHANCE = 1.0 / 4000
 
-BIOMS0 = [PlainsB, DesertB, MountainsB, ForestB]
-
-# Деревья
-STRUCTURES_PATH = PATH + os.path.join("resources", "structures", "")  # Путь к папке со структурами
-
-TreeS = (STRUCTURES_PATH + os.path.join("tree.txt"),
-         25)  # путь к файлу со структурой, шанс генерации (колличество повторов в списке структур)
-Tree2S = (STRUCTURES_PATH + os.path.join("tree2.txt"), 25)
-WheatS = (STRUCTURES_PATH + os.path.join("wheat.txt"), 10)
-
-TREES0 = [TreeS, WheatS, Tree2S]
-
-BIOMS = []
-# Генерация списка с биомами с колличеством их копий которое указано в chance в кортеже биома
-for BIOM in BIOMS0:
-    number_of_copies = BIOM[4]
-    for _ in range(number_of_copies):  # Цикл в диапазоне(сколько копий нужно)
-        BIOMS.append(BIOM)
-
-TREES = []
-for TREE in TREES0:
-    number_of_copies = TREE[1]
-    for _ in range(number_of_copies):  # Цикл в диапазоне(сколько копий нужно)
-        TREES.append(TREE[0])
+SEED_BIOM = 0
+SEED_HEIGHT = 1
+SEED_ORE = 2
+SEED_TREE = 3
 
 
-# Главная функция - генератор мира
-def generation(seed, mode, x, y, flatdata=10):
-    x = int(x / block_size)
-    y = int(y / block_size)
-    # seed - interger или float ключ генерации (любое число) может быть отрицательным
+class Biom:
+    def __init__(self, low, high, block, top_block, tree_chance):
+        self.low = low
+        self.high = high
+        self.block = block
+        self.top_block = top_block
+        self.tree_chance = tree_chance
+
+BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 1.0 / 10)
+BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 0)
+BIOM_MOUNTAINS = Biom(31, 41, BLOCK_ROCK, BLOCK_ROCK, 1.0 / 20)
+BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_SOIL, 1)
+BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 0)
+
+BIOM_DISTRIBUTION = (
+    10 * [BIOM_PLAINS] +
+    6 * [BIOM_DESERT] +
+    7 * [BIOM_MOUNTAINS] +
+    10 * [BIOM_FOREST]
+)
+
+
+def load_tree(name):
+    path = os.path.join(STRUCTURES_PATH, name)
+    f = open(path, 'r')
+    data = f.readlines()
+    return [map(int, row.split(".")) for row in reversed(data)]
+
+TREE_1 = load_tree("tree.txt")
+TREE_2 = load_tree("tree2.txt")
+TREE_WHEAT = load_tree("wheat.txt")
+
+TREE_DISTRIBUTION = (
+    5 * [TREE_1] +
+    5 * [TREE_2] +
+    2 * [TREE_WHEAT]
+)
+
+
+def get_generation_point_height_and_biom(seed, x):
+    # если координаты нулевые то по-умолчанию ставится биом леса
+    # (биом под персонажем в начале)
+    if x == 0:
+        biom = BIOM_FOREST
+    else:
+        random.seed((SEED_BIOM, seed, x))
+        biom = random.choice(BIOM_DISTRIBUTION)
+
+    random.seed((SEED_HEIGHT, seed, x))
+    height = random.randint(biom.low, biom.high)
+
+    return height, biom
+
+
+def get_height_and_biom(seed, x, y):
+    # определение левой и правой точек генерации
+    left_point = x / GENERATION_SIZE * GENERATION_SIZE
+    right_point = left_point + GENERATION_SIZE
+
+    left_height, left_biom = get_generation_point_height_and_biom(seed, left_point)
+    right_height, right_biom = get_generation_point_height_and_biom(seed, right_point)
+
+    if x == left_point:
+        height = left_height
+        biom = left_biom
+    elif x == right_point:
+        height = right_height
+        biom = right_biom
+    else:
+        # определение влияния точек генерации на блок
+        left_weight = float(right_point - x) / GENERATION_SIZE
+        right_weight = 1 - left_weight
+
+        if left_biom == right_biom:
+            biom = left_biom
+        else:
+            random.seed((SEED_BIOM, seed, x, y))
+            if random.random() < left_weight:
+                biom = left_biom
+            else:
+                biom = right_biom
+
+        height = int(left_height * left_weight + right_height * right_weight + 0.5)
+
+    return height, biom
+
+
+def generate_ore(seed, x, depth):
+    # генерация руд (random может быть заменён на шум Перлина для оптимизации)
+    random.seed((SEED_ORE, seed, x, depth))
+    rand = random.random()
+
+    if rand < DIAMOND_CHANCE and depth >= DIAMOND_DEPTH:
+        return BLOCK_DIAMOND
+    if rand < IRON_CHANCE and depth >= IRON_DEPTH:
+        return BLOCK_IRON
+    if rand < COAL_CHANCE:
+        return BLOCK_COAL
+
+    return BLOCK_STONE
+
+
+def generate_tree(seed, x, y):
+    left_point = x / TREE_WIDTH * TREE_WIDTH
+    height, biom = get_height_and_biom(seed, left_point + 5, 0)
+
+    row = y - height + 1
+    col = x - left_point
+
+    if biom.tree_chance > 0 and 0 <= row < TREE_HEIGHT:
+        # есть ли в данном квадрате дерево
+        random.seed((SEED_TREE, seed, left_point))
+        if random.random() < biom.tree_chance:
+            tree = random.choice(TREE_DISTRIBUTION)
+            return tree[row][col]
+
+
+def generate_normal(seed, x, y):
+    height, biom = get_height_and_biom(seed, x, y)
+
+    if y < height:
+        depth = height - y
+
+        if depth == 1:
+            return biom.top_block
+        if depth <= TOP_LAYER_DEPTH:
+            return biom.block
+
+        return generate_ore(seed, x, depth)
+
+    block = generate_tree(seed, x, y)
+    if block is not None:
+        return block
+
+    return BLOCK_WATER if y < 0 else BLOCK_SKY
+
+
+# елавная функция - генератор мира
+def generation(seed, mode, x, y):
+    x = int(x) / BLOCK_SIZE
+    y = SEA_LEVEL - int(y) / BLOCK_SIZE
+    # seed - any ключ генерации
     # mode - string режим генерации (в файле сечас только "optim#normal")
-    # x, y - int кoординаты блока
-    # flatdata - integer больше не используется (высота в режиме плоского мира)
-
+    # x, y - int координаты блока
 
     # основной режим генерации
     if mode == "optim#normal":
-        def get_hight(x, y):
+        return generate_normal(seed, x, y)
 
-            # определение левой и правой точек и их биомов
-            left_point = int(x / generation_size) * generation_size
-            random.seed(seed)
-            random.seed(int(
-                (left_point * 100.0) / generation_size / random.randint(10 * generation_size, 30 * generation_size)))
-            left_biom = random.choice(BIOMS)
-
-            right_point = (int(x / generation_size) * generation_size) + generation_size
-            random.seed(seed)
-            random.seed(int(
-                (right_point * 100.0) / generation_size / random.randint(10 * generation_size, 30 * generation_size)))
-            right_biom = random.choice(BIOMS)
-            # Если координаты нулевые то по-умолчанию ставится биом Plains - равнина
-            # (биом под персонажем в начале)
-            if left_point * block_size_inverted == 0:
-                left_biom = ForestB
-
-            if right_point * block_size_inverted == 0:
-                right_biom = ForestB
-
-            # определение высот 2-х основных точек, левой и правой
-            random.seed(seed * left_point * generation_size)
-            left_point_H = random.randint(left_biom[1], left_biom[0])
-
-            random.seed(seed * right_point * generation_size)
-            right_point_H = random.randint(right_biom[1], right_biom[0])
-            biom = PlainsB
-
-            # если блок совпадает с левой точкой
-            if left_point == x:
-                point_hight = left_point_H
-                biom = left_biom
-
-            # если блок совпадает с правой точкой
-            if right_point == x:
-                point_hight = right_point_H
-                biom = right_biom
-
-            point_hight = None
-
-            if point_hight is None:  # Если высота блока ещё не определена:
-                rsn = 0
-
-                # Определения влияния точек на блок
-                left_percent = float(x - left_point) / generation_size
-                right_percent = float(right_point - x) / generation_size
-
-                # Влияние высоты точек на высоту блока
-                lpercented = left_point_H * right_percent
-                rpercented = right_point_H * left_percent
-
-                # Определение высоты блока
-                point_hight = (left_point_H * right_percent) + (right_point_H * left_percent)
-
-                # Определение биома для блока
-                if left_biom[-1] != right_biom[-1]:
-                    random.seed(seed + x + y + point_hight)
-                    temp = int(right_point_H * right_percent * 100)
-                    if random.randint(-temp, temp) >= 0:
-                        biom = left_biom
-                    else:
-                        biom = right_biom
-                else:
-                    biom = left_biom
-
-            return point_hight, biom
-
-        point_hight, biom = get_hight(x, y)
-
-        # Выбор id блока
-        if y > int(point_hight):
-            if int(y) == int(point_hight):
-                return 6
-            if y - 6 <= point_hight:
-                return biom[2]
-
-            else:
-                # Генерация руд (random может быть заменён на шум Перлина для оптимизации)
-                random.seed(seed + x + y + seed - point_hight + biom[0] - biom[1] * x * y * x ** 2)
-                rand = random.randint(0, 20000)
-                to_id = 1
-                # Угольная руда
-                if rand < 250:
-                    to_id = 4
-                # Железная руда
-                if rand < 40 and point_hight + 20 < y:
-                    to_id = 9
-                # Алмазы
-                if rand < 5 and point_hight + 100 < y:
-                    to_id = 6
-                return to_id
-        else:
-            # уровень моря
-            if int(y) >= 251:
-                return 11
-
-                # Генерация деревьев (ВСЁ ЗАНОВО!)
-        region = int(x / 10) * 10
-        reg_hight, reg_biom = get_hight(region + 5, 0)
-        reg_hight += 1
-        if reg_biom[3] != 1000 and y >= int(reg_hight) - 10:
-            # Есть ли в данном квадрате дерево
-            random.seed(reg_hight)
-            randed = random.randint(0, reg_biom[3])
-            if randed == 0:
-                TREE = random.choice(TREES)  # Рандомное дерево из кортежа
-                tree_file = open(TREE, 'r')
-                tree_data = tree_file.readlines()
-                # Получение блока из структуры дерева.
-                xpos = int(x - region)
-                ypos = int(reg_hight - y)
-                if xpos >= 0 and ypos >= 0:
-                    try:
-                        data = tree_data[10 - ypos]
-                        data = data.split(".")
-                        return int(data[xpos])
-                    except IndexError:
-                        pass
-
-    return 0
-
+    return BLOCK_SKY
