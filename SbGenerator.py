@@ -8,7 +8,8 @@
 import random
 import os
 
-PATH = os.path.dirname(os.path.abspath(__file__))+"\\"  # Путь к папке, в которой мы находимся
+PATH = os.path.dirname(os.path.abspath(__file__)) # Путь к папке, в которой мы находимся
+PATH = os.path.join(PATH, '')
 
 block_size = 45  # размер блока
 block_size_inverted = 1.0 / float(block_size)
@@ -46,7 +47,7 @@ TREES = []
 for TREE in TREES0:
     number_of_copies = TREE[1]
     for _ in range(number_of_copies):  # Цикл в диапазоне(сколько копий нужно)
-        TREES.append(TREE[0])
+        TREES.append(open(TREE[0],'r'))
 
 
 # Главная функция - генератор мира
@@ -169,8 +170,7 @@ def generation(seed, mode, x, y, flatdata=10):
             randed = random.randint(0, reg_biom[3])
             if randed == 0:
                 TREE = random.choice(TREES)  # Рандомное дерево из кортежа
-                tree_file = open(TREE, 'r')
-                tree_data = tree_file.readlines()
+                tree_data = TREE.readlines()
                 # Получение блока из структуры дерева.
                 xpos = int(x - region)
                 ypos = int(reg_hight - y)
