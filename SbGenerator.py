@@ -36,7 +36,7 @@ SEA_LEVEL = 251
 TOP_LAYER_DEPTH = 6
 IRON_DEPTH = 20
 DIAMOND_DEPTH = 100
-ORE_CHANCE = 1.0 / 80
+COAL_CHANCE = 1.0 / 80
 IRON_CHANCE = 1.0 / 500
 DIAMOND_CHANCE = 1.0 / 4000
 
@@ -142,7 +142,7 @@ def generate_ore(seed, x, depth):
         return BLOCK_DIAMOND
     if rand < IRON_CHANCE and depth >= IRON_DEPTH:
         return BLOCK_IRON
-    if rand < ORE_CHANCE:
+    if rand < COAL_CHANCE:
         return BLOCK_COAL
 
     return BLOCK_STONE
