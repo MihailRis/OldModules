@@ -48,19 +48,20 @@ SEED_TREE = 3
 
 
 class Biom:
-    def __init__(self, low, high, block, top_block, density, tree_chance):
+    def __init__(self, low, high, block, top_block, density, smooth, tree_chance):
         self.low = low
         self.high = high
         self.block = block
         self.top_block = top_block
         self.density = density
+        self.smooth = smooth
         self.tree_chance = tree_chance
 
-BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, 1.0 / 10)
-BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, 0)
-BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, 1.0 / 20)
-BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, 1)
-BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 2, 0)
+BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1.0 / 10)
+BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, True, 0)
+BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, False, 1.0 / 20)
+BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1)
+BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 2, True, 0)
 
 BIOM_DISTRIBUTION = (
     12 * [BIOM_PLAINS] +
@@ -102,6 +103,18 @@ def get_generation_point_height_and_biom(seed, x):
     return height, biom
 
 
+def get_generation_point_weights(left_dist, left_smooth, right_smooth):
+    if left_smooth and right_smooth:
+        return 0.5 * (1 + math.cos(math.pi * left_dist))
+
+    elif left_smooth:
+        return math.cos(0.5 * math.pi * left_dist)
+
+    elif right_smooth:
+        return 1 - math.sin(0.5 * math.pi * left_dist)
+
+    return 1 - left_dist
+
 
 # ВЫСОТА ГЕНЕРАЦИИ И БИОМ
 def get_point(seed, x):
@@ -113,7 +126,8 @@ def get_point(seed, x):
     right_height, right_biom = get_generation_point_height_and_biom(seed, right_point)
 
     # определение влияния точек генерации на блок
-    left_weight = 0.5 * (1 - math.cos(math.pi * (right_point - x) / GENERATION_SIZE))
+    left_dist = float(x - left_point) / GENERATION_SIZE
+    left_weight = get_generation_point_weights(left_dist, left_biom.smooth, right_biom.smooth)
     right_weight = 1 - left_weight
 
     if left_biom.density < right_biom.density:
