@@ -185,12 +185,12 @@ def generate_normal(seed, x, y):
     return BLOCK_WATER if y < 0 else BLOCK_AIR
 
 
-# елавная функция - генератор мира
+# Главная функция - генератор мира
 def generation(seed, mode, x, y):
     x = int(x) / BLOCK_SIZE
     y = SEA_LEVEL - int(y) / BLOCK_SIZE
     # seed - any ключ генерации
-    # mode - string режим генерации (в файле сечас только "optim#normal")
+    # mode - string режим генерации (в файле сейчас только "optim#normal")
     # x, y - int координаты блока
 
     # основной режим генерации
