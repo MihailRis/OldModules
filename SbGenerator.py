@@ -5,6 +5,7 @@
 
 
 # import noise # Шум Перлина (пока не используется в этом генераторе)
+import math
 import random
 import os
 
@@ -47,18 +48,19 @@ SEED_TREE = 3
 
 
 class Biom:
-    def __init__(self, low, high, block, top_block, tree_chance):
+    def __init__(self, low, high, block, top_block, density, tree_chance):
         self.low = low
         self.high = high
         self.block = block
         self.top_block = top_block
+        self.density = density
         self.tree_chance = tree_chance
 
-BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 1.0 / 10)
-BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 0)
-BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1.0 / 20)
-BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 1)
-BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 0)
+BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, 1.0 / 10)
+BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, 0)
+BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, 1.0 / 20)
+BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, 1)
+BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 2, 0)
 
 BIOM_DISTRIBUTION = (
     12 * [BIOM_PLAINS] +
@@ -102,7 +104,7 @@ def get_generation_point_height_and_biom(seed, x):
 
 
 # ВЫСОТА ГЕНЕРАЦИИ И БИОМ
-def get_height_and_biom(seed, x, y):
+def get_point(seed, x):
     # определение левой и правой точек генерации
     left_point = x / GENERATION_SIZE * GENERATION_SIZE
     right_point = left_point + GENERATION_SIZE
@@ -110,29 +112,30 @@ def get_height_and_biom(seed, x, y):
     left_height, left_biom = get_generation_point_height_and_biom(seed, left_point)
     right_height, right_biom = get_generation_point_height_and_biom(seed, right_point)
 
-    if x == left_point:
-        height = left_height
-        biom = left_biom
-    elif x == right_point:
-        height = right_height
-        biom = right_biom
+    # определение влияния точек генерации на блок
+    left_weight = 0.5 * (1 - math.cos(math.pi * (right_point - x) / GENERATION_SIZE))
+    right_weight = 1 - left_weight
+
+    if left_biom.density < right_biom.density:
+        top_biom = left_biom
+        bottom_biom = right_biom
+        top_biom_weight = left_weight
     else:
-        # определение влияния точек генерации на блок
-        left_weight = float(right_point - x) / GENERATION_SIZE
-        right_weight = 1 - left_weight
+        top_biom = right_biom
+        bottom_biom = left_biom
+        top_biom_weight = right_weight
 
-        if left_biom == right_biom:
-            biom = left_biom
-        else:
-            random.seed((SEED_BIOM, seed, x, y))
-            if random.random() < left_weight:
-                biom = left_biom
-            else:
-                biom = right_biom
+    height = int(left_height * left_weight + right_height * right_weight + 0.5)
 
-        height = int(left_height * left_weight + right_height * right_weight + 0.5)
+    tree_chance = left_biom.tree_chance * left_weight + right_biom.tree_chance * right_weight
 
-    return height, biom
+    return height, top_biom, bottom_biom, top_biom_weight, tree_chance
+
+
+def get_height_and_biom(seed, x, y):
+    height, top_biom, bottom_biom, top_biom_weight, _ = get_point(seed, x)
+    depth = (height - y - 0.5) / TOP_LAYER_DEPTH
+    return height, top_biom if depth < top_biom_weight else bottom_biom
 
 
 # генерация руд (random может быть заменён на шум Перлина для оптимизации)
@@ -152,17 +155,18 @@ def generate_ore(seed, x, depth):
 
 def generate_tree(seed, x, y):
     left_point = x / TREE_WIDTH * TREE_WIDTH
-    height, biom = get_height_and_biom(seed, left_point + 5, 0)
+    height, _, _, _, tree_chance = get_point(seed, left_point + 5)
 
-    row = y - height + 1
-    col = x - left_point
+    if height > 0:
+        row = y - height + 1
+        col = x - left_point
 
-    if biom.tree_chance > 0 and 0 <= row < TREE_HEIGHT:
-        # есть ли в данном квадрате дерево
-        random.seed((SEED_TREE, seed, left_point))
-        if random.random() < biom.tree_chance:
-            tree = random.choice(TREE_DISTRIBUTION)
-            return tree[row][col]
+        if tree_chance > 0 and 0 <= row < TREE_HEIGHT:
+            # есть ли в данном квадрате дерево
+            random.seed((SEED_TREE, seed, left_point))
+            if random.random() < tree_chance:
+                tree = random.choice(TREE_DISTRIBUTION)
+                return tree[row][col]
 
 
 def generate_normal(seed, x, y):
@@ -185,7 +189,7 @@ def generate_normal(seed, x, y):
     return BLOCK_WATER if y < 0 else BLOCK_AIR
 
 
-# елавная функция - генератор мира
+# главная функция - генератор мира
 def generation(seed, mode, x, y):
     x = int(x) / BLOCK_SIZE
     y = SEA_LEVEL - int(y) / BLOCK_SIZE
