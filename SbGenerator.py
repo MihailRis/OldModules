@@ -93,7 +93,7 @@ def get_generation_point_height_and_biom(seed, x):
     if x == 0:
         biom = BIOM_FOREST
     else:
-        random.seed((SEED_BIOM, seed, x))
+        random.seed((SEED_BIOM, seed, int(x / (2.5 * GENERATION_SIZE))))
         biom = random.choice(BIOM_DISTRIBUTION)
 
     random.seed((SEED_HEIGHT, seed, x))
