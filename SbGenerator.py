@@ -103,15 +103,20 @@ def get_generation_point_height_and_biom(seed, x):
     return height, biom
 
 
+# https://en.wikipedia.org/wiki/Smoothstep
+def smoother_step(t):
+    return t**3 * (t * (t * 6 - 15) + 10)
+
+
 def get_left_generation_point_weight(left_dist, left_smooth, right_smooth):
     if left_smooth and right_smooth:
-        return 0.5 * (1 + math.cos(math.pi * left_dist))
+        return 1 - smoother_step(left_dist)
 
     elif left_smooth:
-        return math.cos(0.5 * math.pi * left_dist)
+        return 1 - 2 * smoother_step(0.5 * left_dist)
 
     elif right_smooth:
-        return 1 - math.sin(0.5 * math.pi * left_dist)
+        return 2 * (1 - smoother_step(0.5 * (left_dist + 1)))
 
     return 1 - left_dist
 
