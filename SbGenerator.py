@@ -103,7 +103,7 @@ def get_generation_point_height_and_biom(seed, x):
     return height, biom
 
 
-def get_generation_point_weights(left_dist, left_smooth, right_smooth):
+def get_left_generation_point_weight(left_dist, left_smooth, right_smooth):
     if left_smooth and right_smooth:
         return 0.5 * (1 + math.cos(math.pi * left_dist))
 
@@ -127,29 +127,29 @@ def get_point(seed, x):
 
     # определение влияния точек генерации на блок
     left_dist = float(x - left_point) / GENERATION_SIZE
-    left_weight = get_generation_point_weights(left_dist, left_biom.smooth, right_biom.smooth)
+    left_weight = get_left_generation_point_weight(left_dist, left_biom.smooth, right_biom.smooth)
     right_weight = 1 - left_weight
 
     if left_biom.density < right_biom.density:
         top_biom = left_biom
         bottom_biom = right_biom
-        top_biom_weight = left_weight
+        top_biom_fraction = left_weight
     else:
         top_biom = right_biom
         bottom_biom = left_biom
-        top_biom_weight = right_weight
+        top_biom_fraction = right_weight
 
     height = int(left_height * left_weight + right_height * right_weight + 0.5)
 
     tree_chance = left_biom.tree_chance * left_weight + right_biom.tree_chance * right_weight
 
-    return height, top_biom, bottom_biom, top_biom_weight, tree_chance
+    return height, top_biom, bottom_biom, top_biom_fraction, tree_chance
 
 
 def get_height_and_biom(seed, x, y):
-    height, top_biom, bottom_biom, top_biom_weight, _ = get_point(seed, x)
+    height, top_biom, bottom_biom, top_biom_fraction, _ = get_point(seed, x)
     depth = (height - y - 0.5) / TOP_LAYER_DEPTH
-    return height, top_biom if depth < top_biom_weight else bottom_biom
+    return height, top_biom if depth < top_biom_fraction else bottom_biom
 
 
 # генерация руд (random может быть заменён на шум Перлина для оптимизации)
@@ -208,7 +208,7 @@ def generation(seed, mode, x, y):
     x = int(x) / BLOCK_SIZE
     y = SEA_LEVEL - int(y) / BLOCK_SIZE
     # seed - any ключ генерации
-    # mode - string режим генерации (в файле сечас только "optim#normal")
+    # mode - string режим генерации (в файле сейчас только "optim#normal")
     # x, y - int координаты блока
 
     # основной режим генерации
