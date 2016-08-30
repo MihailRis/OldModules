@@ -80,11 +80,13 @@ def load_tree(name):
 TREE_1 = load_tree("tree.txt")
 TREE_2 = load_tree("tree2.txt")
 TREE_WHEAT = load_tree("wheat.txt")
+COBBLESTONE_STRUCT = load_tree("cobblestone.txt")
 
 TREE_DISTRIBUTION = (
     5 * [TREE_1] +
     5 * [TREE_2] +
-    1 * [TREE_WHEAT]
+    1 * [TREE_WHEAT] +
+    3 * [COBBLESTONE_STRUCT]
 )
 
 
@@ -220,4 +222,4 @@ def generation(seed, mode, x, y):
     if mode == "optim#normal":
         return generate_normal(seed, x, y)
 
-    return BLOCK_AIR
+	return BLOCK_AIR
