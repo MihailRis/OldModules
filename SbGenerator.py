@@ -47,30 +47,6 @@ SEED_ORE = 2
 SEED_TREE = 3
 
 
-class Biom:
-    def __init__(self, low, high, block, top_block, density, smooth, tree_chance):
-        self.low = low
-        self.high = high
-        self.block = block
-        self.top_block = top_block
-        self.density = density
-        self.smooth = smooth
-        self.tree_chance = tree_chance
-
-BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1.0 / 10)
-BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, True, 0)
-BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, False, 1.0 / 20)
-BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1)
-BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 2, True, 0)
-
-BIOM_DISTRIBUTION = (
-    12 * [BIOM_PLAINS] +
-    6 * [BIOM_DESERT] +
-    7 * [BIOM_MOUNTAINS] +
-    10 * [BIOM_FOREST]
-)
-
-
 def load_tree(name):
     path = os.path.join(STRUCTURES_PATH, name)
     f = open(path, 'r')
@@ -81,13 +57,49 @@ TREE_1 = load_tree("tree.txt")
 TREE_2 = load_tree("tree2.txt")
 TREE_WHEAT = load_tree("wheat.txt")
 COBBLESTONE_STRUCT = load_tree("cobblestone.txt")
+PINE_STRUCT = load_tree("pine.txt")
 
-TREE_DISTRIBUTION = (
-    5 * [TREE_1] +
-    5 * [TREE_2] +
-    1 * [TREE_WHEAT] +
-    3 * [COBBLESTONE_STRUCT]
+class Biom:
+    def __init__(self, low, high, block, top_block, density, smooth, tree_chance, tree_distribution):
+        self.low = low
+        self.high = high
+        self.block = block
+        self.top_block = top_block
+        self.density = density
+        self.smooth = smooth
+        self.tree_chance = tree_chance
+        self.tree_distribution = tree_distribution
+
+PLAINS_STRUCTS = (
+                    2 * [TREE_1] + 
+                    2 * [TREE_2] + 
+                    1 * [TREE_WHEAT] + 
+                    3 * [COBBLESTONE_STRUCT])
+
+FOREST_STRUCTS = (
+                    7 * [TREE_1] + 
+                    7 * [TREE_2] + 
+                    1 * [TREE_WHEAT] + 
+                    5 * [COBBLESTONE_STRUCT])
+
+MOUNTAINS_STRUCTS = (
+                    4 * [PINE_STRUCT] +  
+                    5 * [COBBLESTONE_STRUCT])
+
+BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1.0 / 10, PLAINS_STRUCTS)
+BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, True, 0, ())
+BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, False, 1.0 / 10, MOUNTAINS_STRUCTS)
+BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1, FOREST_STRUCTS)
+BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 2, True, 0, ())
+
+BIOM_DISTRIBUTION = (
+    12 * [BIOM_PLAINS] +
+    6 * [BIOM_DESERT] +
+    7 * [BIOM_MOUNTAINS] +
+    10 * [BIOM_FOREST] +
+    4 * [BIOM_SEA]
 )
+
 
 
 def get_generation_point_height_and_biom(seed, x):
@@ -96,7 +108,7 @@ def get_generation_point_height_and_biom(seed, x):
     if x == 0:
         biom = BIOM_FOREST
     else:
-        random.seed((SEED_BIOM, seed, int(x / (2.5 * GENERATION_SIZE))))
+        random.seed((SEED_BIOM, seed, int(x / (2.5 * GENERATION_SIZE)))) # biom size
         biom = random.choice(BIOM_DISTRIBUTION)
 
     random.seed((SEED_HEIGHT, seed, x))
@@ -176,7 +188,7 @@ def generate_ore(seed, x, depth):
 
 def generate_tree(seed, x, y):
     left_point = x / TREE_WIDTH * TREE_WIDTH
-    height, _, _, _, tree_chance = get_point(seed, left_point + 5)
+    height, top_biom, bottom_biom, _, tree_chance = get_point(seed, left_point + 5)
 
     if height > 0:
         row = y - height + 1
@@ -186,8 +198,10 @@ def generate_tree(seed, x, y):
             # есть ли в данном квадрате дерево
             random.seed((SEED_TREE, seed, left_point))
             if random.random() < tree_chance:
-                tree = random.choice(TREE_DISTRIBUTION)
-                return tree[row][col]
+                for sel_biom in (top_biom, bottom_biom):
+                    if len(sel_biom.tree_distribution):
+                        tree = random.choice(sel_biom.tree_distribution)
+                        return tree[row][col]
 
 
 def generate_normal(seed, x, y):
@@ -222,4 +236,4 @@ def generation(seed, mode, x, y):
     if mode == "optim#normal":
         return generate_normal(seed, x, y)
 
-	return BLOCK_AIR
+    return BLOCK_AIR
