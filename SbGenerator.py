@@ -82,14 +82,20 @@ FOREST_STRUCTS = (
                     1 * [TREE_WHEAT] + 
                     5 * [COBBLESTONE_STRUCT])
 
+TAIGA_STRUCTS = (
+                    14 * [PINE_STRUCT] + 
+                    1 * [TREE_WHEAT] + 
+                    5 * [COBBLESTONE_STRUCT])
+
 MOUNTAINS_STRUCTS = (
                     4 * [PINE_STRUCT] +  
                     5 * [COBBLESTONE_STRUCT])
 
-BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1.0 / 10, PLAINS_STRUCTS)
+BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1.0 / 4, PLAINS_STRUCTS)
 BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, True, 0, ())
-BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, False, 1.0 / 10, MOUNTAINS_STRUCTS)
+BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, False, 1.0 / 4, MOUNTAINS_STRUCTS)
 BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1, FOREST_STRUCTS)
+BIOM_TAIGA = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1, TAIGA_STRUCTS)
 BIOM_SEA = Biom(-17, -13, BLOCK_SAND, BLOCK_SAND, 2, True, 0, ())
 
 BIOM_DISTRIBUTION = (
@@ -97,7 +103,8 @@ BIOM_DISTRIBUTION = (
     6 * [BIOM_DESERT] +
     7 * [BIOM_MOUNTAINS] +
     10 * [BIOM_FOREST] +
-    4 * [BIOM_SEA]
+    4 * [BIOM_SEA] +
+    7 * [BIOM_TAIGA]
 )
 
 
