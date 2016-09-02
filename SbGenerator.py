@@ -58,6 +58,8 @@ TREE_2 = load_tree("tree2.txt")
 TREE_WHEAT = load_tree("wheat.txt")
 COBBLESTONE_STRUCT = load_tree("cobblestone.txt")
 PINE_STRUCT = load_tree("pine.txt")
+WATER_WELL_STRUCT = load_tree("water_well.txt")
+#HOUSE_STRUCT = load_tree("house.txt")
 
 class Biom:
     def __init__(self, low, high, block, top_block, density, smooth, tree_chance, tree_distribution):
@@ -91,8 +93,12 @@ MOUNTAINS_STRUCTS = (
                     4 * [PINE_STRUCT] +  
                     5 * [COBBLESTONE_STRUCT])
 
+DESERT_STRUCTS = (
+                    1 * [WATER_WELL_STRUCT]
+                    )
+
 BIOM_PLAINS = Biom(16, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1.0 / 4, PLAINS_STRUCTS)
-BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, True, 0, ())
+BIOM_DESERT = Biom(1, 11, BLOCK_SAND, BLOCK_SAND, 2, True, 1.0 / 10, DESERT_STRUCTS)
 BIOM_MOUNTAINS = Biom(31, 41, BLOCK_SNOW, BLOCK_SNOW, 1, False, 1.0 / 4, MOUNTAINS_STRUCTS)
 BIOM_FOREST = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1, FOREST_STRUCTS)
 BIOM_TAIGA = Biom(1, 21, BLOCK_SOIL, BLOCK_GRASS, 3, True, 1, TAIGA_STRUCTS)
