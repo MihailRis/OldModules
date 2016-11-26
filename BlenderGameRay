@@ -1,0 +1,10 @@
+
+import bge
+cont = bge.logic.getCurrentController()
+scene = bge.logic.getCurrentScene()
+own = cont.owner
+
+sen = cont.sensors["название сенсора ray"]
+obj = scene.objects["название пустышки"]
+
+obj.worldPosition = sen.hitPosition
